@@ -36,10 +36,16 @@ class WidgetWithUniversalRef {
 public:
     template<typename T, typename D>
     WidgetWithUniversalRef(T&& newName, D&& newData) :
-        name(std::forward<T>(newName)), data(std::forward<T>(newData)) 
+        name(std::forward<T>(newName)), p(std::forward<T>(newData)) 
     { 
         // initialize something else
     }
+    template<typename W, typename T, typename D>
+    WidgetWithUniversalRef(W&& newDataStructure) :
+        name(std::forward<T>(newDataStructure.name)), p(std::forward<T>(newDataStructure.p))
+    {
+        // initialize something else
+    } 
     template<typename T>
     void setName(T&& newName)  // newName is unversal reference 
     { this->name = std::forward<T>(newName); }
@@ -91,8 +97,16 @@ int main (int argc, const char* argv[]) {
        // in a way that permits those functions to take advantage of the object's
        // rvalueness. The way to do that is to cast parameters bound to such 
        // objects to rvalues. For this purpose we use std::move.
-       SomeDataStructure* data = new SomeDataStructure();
-
+       std::shared_ptr<SomeDataStructure> data = std::make_shared<SomeDataStructure>();
+       data->names[0] = "Mieko";
+       data->names[1] = "Hanna";
+       data->names[2] = "Emily";
+       data->numbers[0] = 123.45;
+       data->numbers[1] = 9876.1;
+       data->numbers[2] = 456.99;
+       std::string name = "Dimitar";
+       std::unique_ptr<WidgetWithRValueRef> widget =
+           std::make_unique<WidgetWithRValueRef>(std::move(name), std::move(data));
 
 
 
