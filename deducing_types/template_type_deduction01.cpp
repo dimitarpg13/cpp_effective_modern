@@ -227,7 +227,7 @@ template<typename T>
 void f_copy(T param) {
   assert(std::is_const<T>::value==false);
   assert(std::is_volatile<T>::value==false);
-  std::cout << "T is reference: " << std::is_reference<T>::value << std::endl;
+  assert(std::is_reference<T>::value==false);
   std::cout << "T is pointer: " << std::is_pointer<T>::value << std::endl;
 };
 
