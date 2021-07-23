@@ -121,6 +121,14 @@ void f_ptr(T* param) {
 };
 
 
+template<typename T>
+void f_const_ptr(const T* param) {
+  assert(std::is_pointer<T>::value==false);
+  assert(std::is_reference<T>::value==false);
+  assert(std::is_const<T>::value==false);
+};
+
+
 int main(const int argc, const char* argv[]) 
 {
    int x = 27;
@@ -138,6 +146,9 @@ int main(const int argc, const char* argv[])
 
    f_ptr(&x);
    f_ptr(px);
+
+   f_const_ptr(&x);
+   f_const_ptr(px);
 
    return 0;
 }
