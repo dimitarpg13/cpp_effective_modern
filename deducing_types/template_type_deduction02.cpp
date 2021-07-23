@@ -3,6 +3,7 @@
 #include <typeinfo>
 #include <type_traits>
 #include <assert.h>
+#include <array>
 
 // Array Arguments
 //
@@ -74,8 +75,23 @@ constexpr std::size_t arraySize(T (&)[N]) noexcept    // below on constexpr
    return N;
 }
 
+// using constexpr makes the result available during compilation. That makes it possible
+// to declare an array with the same number of elements as a second array whose size is 
+// computed from a braced initializer:
+//
+int keyVals[] = { 1, 3, 7, 9, 11, 22, 35 };   // keyVals has 7 elements
+
+int mappedVals[arraySize(keyVals)];  // and so does mappedVals
+
+// alternatively we can use std::array
+//
+std::array<int, arraySize(keyVals)> mappedVals2; // mappedVals2' size is 7
+
+
+
 int main(const int argc, const char* argv[]) 
 {
+
 
    return 0;
 }
