@@ -227,6 +227,8 @@ template<typename T>
 void f_copy(T param) {
   assert(std::is_const<T>::value==false);
   assert(std::is_volatile<T>::value==false);
+  std::cout << "T is reference: " << std::is_reference<T>::value << std::endl;
+  std::cout << "T is pointer: " << std::is_pointer<T>::value << std::endl;
 };
 
 int main(const int argc, const char* argv[]) 
@@ -235,7 +237,9 @@ int main(const int argc, const char* argv[])
    const int cx = x;
    const int& rx = x;
    const int *px = &x;
-   
+   const char* const ptr = // ptr is const pointer to const object
+     "Fun with pointers";
+
    f_ref(x);
    f_ref(cx);
    f_ref(rx);
@@ -249,6 +253,12 @@ int main(const int argc, const char* argv[])
 
    f_const_ptr(&x);
    f_const_ptr(px);
+
+   f_copy(x);
+   f_copy(cx);
+   f_copy(rx);
+   f_copy(px);
+   f_copy(ptr);
 
    return 0;
 }
