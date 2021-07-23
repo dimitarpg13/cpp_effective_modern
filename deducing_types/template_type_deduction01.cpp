@@ -85,22 +85,59 @@
 //    f(rx); // T is int, param's type is const int&
 //
 // As before, rx's reference-ness is ignored during type deduction.
+// If param were a pointer (or a pointer to const) instead of a reference,
+// things would work essentially the same way:
 //
+//    template<typename T>
+//    void f(T* param);
+//
+//    int x = 27;
+//    const int *px = &x;
+//    f(&x); // T is int, param's type is int*
+//    f(px); // T is const int,
+//           // param's type is const int*
 
 template<typename T>
 void f_ref(T& param) {
+   assert(std::is_pointer<T>::value==false);
    assert(std::is_reference<T>::value==false);
    std::cout << "T is const: " << std::is_const<T>::value << std::endl;
 };
+
+
+template<typename T>
+void f_const_ref(const T& param) {
+  assert(std::is_pointer<T>::value==false);
+  assert(std::is_reference<T>::value==false);
+  assert(std::is_const<T>::value==false); 
+};
+
+
+template<typename T>
+void f_ptr(T* param) {
+  assert(std::is_pointer<T>::value==false);
+  assert(std::is_reference<T>::value==false);
+  std::cout << "T is const: " << std::is_const<T>::value << std::endl;
+};
+
 
 int main(const int argc, const char* argv[]) 
 {
    int x = 27;
    const int cx = x;
    const int& rx = x;
+   const int *px = &x;
+   
    f_ref(x);
    f_ref(cx);
    f_ref(rx);
+
+   f_const_ref(x);
+   f_const_ref(cx);
+   f_const_ref(rx);
+
+   f_ptr(&x);
+   f_ptr(px);
 
    return 0;
 }
