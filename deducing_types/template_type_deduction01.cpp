@@ -96,8 +96,17 @@
 //    f(&x); // T is int, param's type is int*
 //    f(px); // T is const int,
 //           // param's type is const int*
+//
+//  Case 2: ParamType is Universal Reference
+//  Universal reference parameters are declared like rvalue references but they 
+//  behave differently when lvalue arguments are passed in. 
+//  * if expr is an lvalue, both T and ParamType are deduced to be lvalue references.
+//  That's doubly unusual. First, it is the only situation in template type deduction
+//  where T is deduced to be a reference. Second, although ParamType is declared
+//  using the syntax for an rvalue reference, its deduced type is an lvalue reference.
+//  * if expr is an rvalue the "normal" (Case 1) rules apply 
 
-template<typename T>
+templat<typename T>
 void f_ref(T& param) {
    assert(std::is_pointer<T>::value==false);
    assert(std::is_reference<T>::value==false);
@@ -128,6 +137,13 @@ void f_const_ptr(const T* param) {
   assert(std::is_const<T>::value==false);
 };
 
+
+template<typename T>
+void f_univ_ref(T&& param) {
+  assert(std::is_pointer<T>::value==false);
+  std::cout << "T is reference: " << std::is_reference<T>::value << std::endl;
+  std::cout << "T is const: " << std::is_const<T>::value << std::endl;
+} 
 
 int main(const int argc, const char* argv[]) 
 {
