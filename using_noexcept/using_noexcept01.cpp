@@ -76,9 +76,46 @@
 // copy operations in C++98 with calls to move operations in C++11 only if the move
 // are known not to emit exceptions. But how can a function know if a move operation
 // won't produce exception? The answer is obvious: it checks to see if the operation
-// is declared noexcept.
+// is declared noexcept. The checking is typically rather roundabout. Functions like
+// std::vector::push_back call std::move_if_noexcept, a variation of std::move that
+// conditionally casts to an rvalue depending on whether the type's move ctor is
+// noexcept. In turn, std::move_if_noexcept consults std::is_nothrow_move_constructible,
+// and the value of this type trait is set by compilers, based on whether the move
+// ctor has a noexcept or throw()) designation.
 //
+// swap functions comprise another case where noexcept is particularly desirable.
+// swap is a key component of many STL algorithm implementations and it is employed
+// in copy assignment operators. Whether swaps in the StdLib are noexcept is sometimes
+// dependent on whether user-defined swaps are noexcept. For example, the declarations
+// for the StdLib's swaps for arrays and std::pair are:
 //
+//    template <class T, size_t N>
+//    void swap(T (&a)[N],
+//              T (&b)[N]) noexcept(noexcept(swap(*a, *b)));
+//
+//    template <class T1, class T2>
+//    struct pair {
+//      ...
+//      void swap(pair& p) noexcept(noexcept(swap(first, p.first)) &&
+//                                  noexcept(swap(second, p.second)));
+//      ...
+//    };
+//
+// These functions are conditionally noexcept: whether they are noexcept depends on
+// whether the expressions inside the noexcept clauses are noexcept. Given two arrays
+// of Widget, swapping them is noexcept only if swapping individual elements in the 
+// arrays is noexcept i.e. swap for Widget is noexcept. The author of Widget's swap 
+// thus determines whether swapping arrays of Widget is noexcept. That, in turn, 
+// determines whether swapping arrays of Widget is noexcept. Similarly, whether
+// swapping two std::pair objects containing Widgets is noexcept depends on whether
+// swap for Widgets is noexcept. The fact that swapping higher-level data structures
+// can generally be noexcept only if swapping their lower-level constituents is 
+// noexcept motivates the app developer to offer noexcept swap functions whever 
+// he/she can.
+//
+// A function should be declared noexcept only if the developer is willing to commit
+// to a nonexcept implementation over the long term. If the developer declares a 
+// function noexcept and later attempts to remove it problems will ensue.
 
 int main(const int argc, const char* argv[]) {
 
