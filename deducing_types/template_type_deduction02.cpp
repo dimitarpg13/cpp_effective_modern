@@ -87,7 +87,44 @@ int mappedVals[arraySize(keyVals)];  // and so does mappedVals
 //
 std::array<int, arraySize(keyVals)> mappedVals2; // mappedVals2' size is 7
 
-
+// Function Arguments
+//
+// Arrays aren't the only things in C++ that can decay into pointers. Function types 
+// can decay into function pointers, and everything we have discussed regarding 
+// type deduction for arrays applies to type deduction for functions and their 
+// decay into function pointers. As a result:
+//
+//    void someFunc(int, double);      // someFunc is a function
+//                                     // type is void(int, double)
+//
+//    template<typename T>
+//    void f1(T param);                // in f1, param passed by value
+//
+//    template<typename T>
+//    void f2(T& param);               // in f2, param passed by ref
+//
+//    f1(someFunc);                    // param deduced as ptr-to-func;
+//                                     // type is void (*)(int, double)
+//
+//    f2(someFunc);                    // param deduced as ref-to-func;
+//                                     // type is void (&)(int, double)
+//
+// This rarely makes any difference in practice, but if you're going to know about
+// array-to-pointer decay, you might as well know about function-to-pointer decay, too.
+//
+// Things To Remember
+//
+// * During template type deduction, arguments that are references are treated as
+// non-references, i.e. thier reference-ness is ignored
+//
+// * When deducing types for universal reference parameters, lvalue arguments get 
+// special treatment
+//
+// * When deducing types for by-value parameters, const and/or volatile arguments
+// are treated as non-const and non-volatile.
+//
+// * During template type deduction, arguments that are array or function names
+// decay to pointers, unless they are used to initialize references.
 
 int main(const int argc, const char* argv[]) 
 {
