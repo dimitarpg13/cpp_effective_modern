@@ -115,7 +115,41 @@
 //
 // A function should be declared noexcept only if the developer is willing to commit
 // to a nonexcept implementation over the long term. If the developer declares a 
-// function noexcept and later attempts to remove it problems will ensue.
+// function noexcept and later attempts to remove it problems will ensue. If he
+// removes noexcept from the function's declaration (i.e. change in interface)
+// he will be running the risk of breaking client code. He could change the
+// implementation such that an exception could escape yet keep the original
+// now incorrect exception specification. If he does that the program will be
+// terminated if an exception tries to leave the function.
+//
+// Most functions are exception-neutral. Such functions throw no exceptions themselves
+// but the functions they call may emit one. When that happens, the exception-neutral
+// function allows the emitted exception to pass through on its way to a handler
+// further up the call chain. Exception-neutral functions are never noexcept,
+// because they may emit such "just passing through" exceptions. Most functions,
+// therefore, quite properly lack the noexcept designation.
+//
+// Some functions, have natural implementations that emit no exceptions, and a few
+// more - notably the move operations and swap - being noexcept can have a significant
+// payoff, it's worth implementing them in a noexcept manner if at all possible.
+//
+// Notice the difference between implementation of functions which have natural 
+// noexcept implementations and twisting a function implementation to permit a 
+// noexcept declaration. If a straightforward function implementation might yield
+// exceptions e.g. by invoking a function which might throw, the work which will be
+// needed to hide it from the callers e.g. catching exceptions and replacing them 
+// with status codes or special return values will not only complicate the function
+// implementation but will complicate the code at the call sites too. For example, 
+// callers may have to check for status codes or special return values. The runtime
+// cost of those complications e.g. extra branches, larger functions that put more
+// pressure on instruction caches could exceed any speedup we'd hoped to achieve
+// via noexcept; Additionally the code will be harder to comprehend and maintain.
+//
+// For some functions, being noexcept is so important, that they are that way by
+// default. In C++98, it was considered bad style to permit the memory deallocation 
+// functions (i.e. operator delete and operator delete[]) and destructors to emit
+// exceptions, and C++11, this style rule has been all but upgraded to a lang rule.
+//
 
 int main(const int argc, const char* argv[]) {
 
