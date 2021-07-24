@@ -186,7 +186,60 @@
 //
 //    void f(const std::string& s) noexcept;   // precond s.length() <= 32
 //
+// Suppose that f's implementer chooses to check for precondition violations.
+// Checking isn't required, but it is also not forbidden, and checking the 
+// precondition could be useful e.g. during system testing. Debugging an exception
+// that's been thrown is generally easier than trying to track down the cause of
+// undefined behavior. But how should a precondition violation be reported such
+// that a test harness or client error handler could detect it? A straightforward
+// approach would be to throw a "precondition was violated" exception, but if f
+// is declared noexcept that would be impossible; throwing an exception would 
+// lead to program termination. For this reason, library designers who distinguish
+// wide from narrow contracts generally reserve noexcept for functions with wide
+// contracts.
 //
+// Elaboraton of an another point: compilers typically offer no help in identifying
+// inconsistencies between function implementations and their exception 
+// specifications. Consider this code which is legal:
+//
+//    void setup();      // functions defined elsewhere
+//    void cleanup();
+//
+//    void doWork() noexcept
+//    {
+//        setup();       // set up work to be done
+//                  
+//        ...            // do the actual work
+//
+//        cleanup();     // perform cleanup actions
+//    }
+//
+// Here, doWork is declared noexcept, even though it calls the non-noexcept 
+// functions setup and cleanup. This seems contradictory, but it could be 
+// that setup and cleanup document that they never emit exceptions, even
+// though they're not declared that way. There could be good reasons for
+// their non-noexcept declarations. For example, they might be part of a 
+// library written in C. (Even functions from the C StdLib that have been
+// moved into the std namespace lack exception specifications e.g. 
+// std::strlen isn't declared noexcept.) Or they could be part of a C++98
+// library that decided not to use C++98 exception specifications and hasn't
+// yet been revised for C++11.
+//
+// Because there are legitimate reasons for noexcept functions to rely on 
+// code lacking the noexcept guarantee, C++ permits such code, and compilers
+// generally do not issue warnings about it.
+//
+// Things To Remember
+//
+// * noexcept is part of a function's interface, and that means that callers
+// may depend on it
+//
+// * noexcept functions are more optimizable than non-noexcept functions
+//
+// * noexcept is particularly valuable for the move operations, swap,
+// memory deallocation functions, and destructors
+//
+// * most functions are exception-neutral rather than noexcept
 
 int main(const int argc, const char* argv[]) {
 
