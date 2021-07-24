@@ -149,6 +149,43 @@
 // default. In C++98, it was considered bad style to permit the memory deallocation 
 // functions (i.e. operator delete and operator delete[]) and destructors to emit
 // exceptions, and C++11, this style rule has been all but upgraded to a lang rule.
+// By default, all memory deallocation functions and all destructors - both user-
+// defined and compiler-generated - are implicitly noexcept. Thus there is no need
+// to declare them noexcept. The only time a destructor is not implicitly noexcept
+// is when a data member of the class (including inheritted members and those
+// contained inside other data members) is that of a type that expressly states
+// that its destructor may emit exceptions (e.g. declares noexcept(false) ). Such
+// destructors are uncommon. There are none in the StdLib and if the destructor for
+// an object being used by the StdLib (e.g. because it is in a container or was 
+// passed to an algorithm) emits an exception, the behavior of the program is 
+// undefined. 
+//
+// It is worth noting that some library interface designers distinguish functions
+// with wide contracts from those with narrow contracts. A function with a wide
+// contract has no preconditions. Such a function may be called regardless of the
+// state of the program, and it imposes no contraints on the arguments the callers
+// pass it. Functions with wide contracts never exhibit undefined behavior.
+//
+// Functions without wide contracts have narrow contracts. For such functions, if
+// a precondition is violated, results are undefined. 
+//
+// If the developer is writing a function with wide contract and knows that it 
+// won't emit exceptions, then it should be declared with noexcept. For functions
+// with narrow contracts, the situation is trickier. For example, suppose one is
+// writing a function f taking a std::string parameter, and suppose f's natural 
+// implementation never yields an exception. That suggest that f should be 
+// declared noexcept.
+//
+// Suppose that f has a precondition: the length of its std::string parameter
+// does not exceed 32 chars. If f were to be called with a std::string whose 
+// length is greater than 32, behavior would be undefined, because a precondition
+// violation by definition results in undefined behavior. f is under no obligation
+// to check this precondition, because functions may assume that their preconditions
+// are satisified. Callers are responsible for ensuring that such assumptions are 
+// valid. Even with a precondition declaring f noexcept seems appropriate:
+//
+//    void f(const std::string& s) noexcept;   // precond s.length() <= 32
+//
 //
 
 int main(const int argc, const char* argv[]) {
