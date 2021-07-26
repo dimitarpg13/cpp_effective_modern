@@ -58,6 +58,42 @@ void func_for_rx(const T& param) {    // deducing rx's type
   // some initialization code here
 };
 
+// Recall, we have divided template type deduction into three cases
+// based on the characteristics of ParamType, the type specifier for
+// param in the general function template. In a variable declaration
+// using auto, the type specifier takes the place of ParamType, so there
+// are three cases for that too:
+//
+// Case 1: the type specifier is a pointer or reference, but not a 
+// universal reference
+//
+// Case 2: the type specifier is a universal reference
+//
+// Case 3: the type specifier is neither a pointer nor a reference
+//
+// We have already seen examples of cases 1 and 3:
+//
+// auto x = 27;           // case 3 (x is neither ptr nor reference)
+//
+// const auto cx = x;     // case 3 (cx isn't either)
+//
+// const auto& rx = x;    // case 1 (rx is a non-universal ref)
+//
+// Case 2 works as you'd expect:
+//
+// auto&& uref1 = x;      // x is int and lvalue,
+//                        // so uref1's type is int&
+//
+// auto&& uref2 = cx;     // cx is const int and lvalue,
+//                        // so uref2's type is const int&
+//
+// auto&& uref3 = 27;     // 27 is int and rvalue,
+//                        // so uref3's type is int&&
+//
+// We have similar rules for decay of array and function names into 
+// pointers for non-reference type specifiers:
+//
+// 
 
 
 int main(const int argc, const char* argv[]) 
