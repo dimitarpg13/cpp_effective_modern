@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <assert.h>
 #include <array>
+#include <initializer_list>
 
 // Understanding auto type deduction
 //
@@ -109,6 +110,80 @@ auto func1 = someFunc;   // func1's type is void (*)(int, double)
 
 auto& func2 = someFunc;  // func2's type is void (&)(int, double)
 
+// as you can see there is a direct mapping between template type 
+// deduction and auto type deduction. There is literally an algorithmic 
+// transformation from one to the other
+//
+// There is one case in which auto and template deduction differ. Observe
+// that if you want to declare an int with an initial value of 27, C++98
+// will give you two syntactic choices:
+//
+   int x11 = 27;
+   int x12(27);
+//
+// C++11, through its support for uniform initialization, adds these:
+//
+   int x13 = { 27 };
+   int x14{ 27 };
+//
+// So, four different syntaxes are available to build the result of assigning
+// an int with the value 27
+//
+// With introduction of the keyword auto we would like to replace all of the 
+// four syntaxes with the auto equivalents as:
+//
+   auto x21 = 27;
+   auto x22(27);
+   auto x23 = { 27 }; // type is std::initializer_list<int>, value: { 27 }
+   auto x24{ 27 }; // type is std::initializer_list<int>, value: { 27 }
+//
+// These declarations all compile, but they don't have the same meaning as the
+// ones they replace. The first two statements do, indeed, declare a variable 
+// of type int with value 27. The second two, however, declare a variable of
+// type std::initializer_list<int> containing a single element with value 27!  
+// This is due to a special type deduction rule for auto. When the initializer
+// for an auto-declared variable is enclosed in braces, the deduced type is a
+// std::initializer_list. If such a type can't be deduced (e.g. because the values
+// in the braced initializer are of different types), the code will be rejected:
+//
+//  auto x5 = { 1, 2, 3.0 };  // error! can't deduce T for std::initializer_list<T>
+//
+//  As the comment indicates, type deduction will fail in this case, but it's 
+//  important to recognize that there are actually two kinds of deduction taking
+//  place. One kind stems from the use of auto: x5's type has to be deduced.
+//  Because x5's initializer is in braces, x5 must be deduced to be a 
+//  std::initializer_list. But std::initializer_list is a template. Instantiations
+//  are std::initializer_list<T> for some type T, and that means that T's type
+//  must also be deduced. Such deduction fails under the purview of the second kind
+//  of deduction occurring here: template type deduction. In this example, that
+//  deduction fails, because the values in the braced initializer don't have single 
+//  type. 
+//
+//  The treatment of braced initializers is the only way in which auto type deduction
+//  and template type deduction differ. When an auto-declared variable is initialized
+//  with a braced initializer, the deduced type is an instantiation of 
+//  std::initializer_list. But if the corresponding template is passed the same
+//  initializer list, type deduction fails, and the code is rejected:
+//
+      auto xx = { 11, 23, 9 }; // xx's type is std::initializer_list<int>
+      
+      template<typename T>     // template with parameter declaration equivalent to 
+      void templ_func(T param) {        // x's declaration
+        // do something
+      };
+
+   // templ_func({ 11 23, 9 });         // error! can't deduce type for T
+
+//  However, if you specify in the template that param is std::initializer_list<T>
+//  for some unknown T, template type deduction will deduce what T is:
+
+     template<typename T>
+     void templ_func_with_init_list(std::initializer_list<T> initList) {
+       // do something
+     };
+
+
+
 
 
 int main(const int argc, const char* argv[]) 
@@ -122,5 +197,10 @@ int main(const int argc, const char* argv[])
 
    func_for_rx(x);                       // conceptual call: param's
                                          // deduced type is rx's type
+
+   
+     templ_func_with_init_list({ 11, 23, 9 });         // T deduced as int, and initList's type is
+                                                       // std::initializer_list<int>
+
    return 0;
 }
