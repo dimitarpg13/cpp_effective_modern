@@ -182,7 +182,49 @@ auto& func2 = someFunc;  // func2's type is void (&)(int, double)
        // do something
      };
 
-
+// so the only real difference between auto and template type deduction is that auto assumes
+// that a braced initializer represents a std::initializer_list, but template deduction
+// does not. 
+//
+// There does not seem to be convincing explanation why auto type deduction has a special
+// rule for braced initializers..
+//
+// One must remember that if one declares a variable using auto and initializes it with a
+// braced initializer, the deduced type will always be std::initializer_list. A classic
+// mistake in C++11 programming is accidentally declaring std::initializer_list variable
+// when one means to declare something else. This pitfall is one of the reasons some
+// developers put braces around their initializers only when they have to.
+//
+// For C++11 this is the full story, but for C++14 the tale continues. C++14 permits auto
+// to indicate that a function's return type should be deduced, and C++14 lambdas may
+// use auto in parameter declarations. However, these uses of auto employ 
+// template type deduction, not auto type deduction. So a function with an auto return
+// type that returns a braced initializer won't compile:
+//
+//   auto createInitList()
+//   {
+//      return { 1, 2, 3 };       // error: can't deduce type for { 1, 2, 3 }
+//   }
+//
+// The same is true when auto is used in a parameter type specification in C++14 lambda:
+//
+//   std::vector<int> v;
+//   ...
+//
+//   auto resetV = 
+//     [&v](const auto& newValue) { v = newValue; }     // C++14
+//   ...
+//   resetV({ 1, 2, 3 });    // error! can't deduce type for { 1, 2, 3 }
+//
+//
+//  Things to remember:
+//
+//  * auto type deduction is usually the same as template type deduction, but auto
+//  type deduction assumes that a braced initializer represents a std::initializer_list,
+//  and template type deduction does not.
+//
+//  * auto in a function return type or a lambda parameter implies template type
+//  deduction, not auto type deduction
 
 
 
