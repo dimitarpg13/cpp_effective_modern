@@ -8,4 +8,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_subdirectory(deducing_types)
 add_subdirectory(universal_references)
 add_subdirectory(using_noexcept)
-
+add_subdirectory(auto)
