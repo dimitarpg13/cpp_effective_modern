@@ -222,6 +222,84 @@
      return std::forward<Container>(c)[i];
   }
 
+// This should do everything we want but it requires C++14 compiler. If one is not
+// available for your project you will need to use C++11 version of the template.
+// It is the same as the C++14 counterpart except that you have to specify the 
+// return type yourself.
+
+  template<typename Container, typename Index>
+  auto
+  authAndAccess(Container&& c, Index i)
+  -> decltype(std::forward<Container>(c)[i])
+  {
+     authenticateUser();
+     return std::forward<Container>(c)[i];
+  }
+
+// Notice previous remark that decltype almost always produces the type we expect.
+// To fully understand decltype's behavior, you'll have to familiarize yourself
+// with a few special cases. Most of these are too obscure to warrant discussion
+// but looking into one lends insight into decltype as well as its use.
+//
+// Applying decltype to a name yields the declared type for that name. Names are 
+// lvalue expressions, but that does not affect decltype's behavior. For lvalue
+// expressions more complicated than names, however, decltype ensures the type 
+// required is always lvalue reference. That is , if an lvalue expression other
+// than a name has type T, decltype reports that type as T&. This seldom has any
+// impact because the type of the most lvalue expressions inherently includes an
+// lvalue reference qualifier. Functions returning lvalues, for example always
+// return lvalue references.
+// There is an implication of this behavior that is worth being aware of, however.
+// In
+//   int x = 0;
+// x is the name of a variable, so decltype(x) is int. But wrapping the name x in
+// parentheses - "(x)" - yields an expression more complicated than a name. Being
+// a name, x is an lvalue and C++ defines the expression (x) to be an lvalue too.
+// decltype((x)) is therefore int&. Putting parentheses around a name can change
+// the type that decltype reports it.
+//
+// In C++11 this is a little more than a curiosity but in conjunction with C++14's
+// support for decltype(auto), it means that a seemingly trivial change in the way
+// you write a return statement can affect the deduced type for a function:
+//
+  decltype(auto) f1()
+  {
+     int x = 0;
+
+     return x;  // decltype(x) is int, so f1 returns int
+  };
+
+  decltype(auto) f2()
+  {
+     int x = 0;
+
+     return (x); // decltype((x)) is int& so f2 returns int&
+  };
+
+// Note that not only does f2 have a different return type from f1, it's also 
+// returning a reference to a local variable! This will lead to undefined 
+// behavior.
+//
+// The primary lesson is to pay very close attention when using decltype(auto).
+// Seemingly insignificant details in the expression whose type is being 
+// deduced can affect the type that decltype(auto) reports. 
+//
+// At the same time, don't loose sight of the bigger pciture. Sure, decltype 
+// (both alone and in conjunction with auto) may occasionally yield type-
+// deduction surprises, but that's not the normal solution. Normally, decltype
+// produces the type you expect especially when appllied to names.
+//
+// Things To Remember:
+//
+// * decltype almost always yields the type of a variable or expression without
+// any modifications
+//
+// * for lvalue expressions of type T other than names, decltype always reports
+// a type of T&
+//
+// C++14 supprts decltype(auto), which, like auto, deduces a type from its
+// initializer, but it performs type deduction using decltype rules.
+//
 
 int main(const int argc, const char* argv[]) 
 {
