@@ -1,10 +1,12 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <typeinfo>
 #include <type_traits>
 #include <assert.h>
 #include <array>
 #include <initializer_list>
+#include <deque>
 
 // Understanding  decltype
 //
@@ -144,17 +146,17 @@
 // convenient for declaring variables when you want to apply the decltype type 
 // deduction rules to the initializing expression:
 //
-     struct Widget {
-       int i;
-     };
+   struct Widget {
+     int i;
+   };
      
-     Widget w;
+   Widget w;
 
-     const Widget& cw = w;
+   const Widget& cw = w;
 
-     auto myWidget1 = cw;    // auto type deduction: myWidget1's type is Widgest
+   auto myWidget1 = cw;    // auto type deduction: myWidget1's type is Widgest
 
-     decltype(auto) myWidget2 = cw;   // decltype type deduction:
+   decltype(auto) myWidget2 = cw;   // decltype type deduction:
                                       // myWidget2's type is const Widget&
 
 // Let us look again at authAndAccess3 - the container is passed by 
@@ -164,7 +166,31 @@
 // can't bind to lvalue references (unless they're lvalue-references-to-const
 // which is not the case here).
 //
-// Admittedly, 
+// Admittedly, passing an rvalue container to authAndAccess is an edge case.
+// An rvalue container, being a temporary object, would typically be destroyed
+// at the end of the statement containing the call to authAndAccess, and that
+// means that a reference to an element in that container (which is typically
+// what authAndAccess would return) would dangle at the end of the statement
+// that created it. Still, it could make sense to pass a temp object to
+// authAndAccess. A client might simply want to make a copy of an element
+// in the temporary container:
+
+   std::deque<std::string> makeStringDeque() {
+       std::deque<std::string> res;
+       std::stringstream stream;
+       for (int i=1; i<10; ++i) {
+           stream << i;
+           std::string str;
+           stream >> str; 
+           res.push_back(str);
+       }
+       // init res with something
+       return res;
+   }; 
+
+// make copy of the 5th element of deque returned from makeStringDeque
+   auto s = authAndAccess3(makeStringDeque(), 5);
+
 
 int main(const int argc, const char* argv[]) 
 {
