@@ -191,6 +191,37 @@
 // make copy of the 5th element of deque returned from makeStringDeque
    auto s = authAndAccess3(makeStringDeque(), 5);
 
+// Supporting such use means we need to revise the declaration for authAndAccess to
+// accept both lvalues and rvalues. Overloading would work (one overload would 
+// declare an lvalue reference parameter, the other an rvalue reference parameter),
+// but then we'd have two functions to maintain. A way to avoid that is to have 
+// authAndAccess employ a reference parameter that can bind to lvalues and rvalues
+// i.e. using unversal reference. authAndAccess can be declared like this:
+//
+  template<typename Container, typename Index>
+  decltype(auto) authAndAccess4(Container&& c, Index i)  // c is now universal ref
+  { 
+     authenticateUser();
+     return c[i];
+  };
+
+// In this template we do not know what type of container we are operating on, and
+// that means we're equally ignorant of the type of index objects it uses. Employing
+// pass-by-value for objects of an unknown type generally risks the performance hit
+// of unnecessary copying, the behavioral problems of object slicing but in the case
+// of container indices, following the example of stdlib for index values 
+// (e.g. operator[] for std::string, std::vector, and std::deque) seems reasonable.
+// However, we need to update the template's implementation to bring it into accord
+// the design pattern of forwarding universal references:
+//
+  template<typename Container, typename Index>  // final C++14 version
+  decltype(auto)
+  authAndAccess5(Container&& c, Index i)
+  {
+     authenticateUser();
+     return std::forward<Container>(c)[i];
+  }
+
 
 int main(const int argc, const char* argv[]) 
 {
