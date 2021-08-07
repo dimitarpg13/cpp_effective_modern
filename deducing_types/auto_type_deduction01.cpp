@@ -118,13 +118,13 @@ auto& func2 = someFunc;  // func2's type is void (&)(int, double)
 // that if you want to declare an int with an initial value of 27, C++98
 // will give you two syntactic choices:
 //
-   int x11 = 27;
-   int x12(27);
+int x11 = 27;
+int x12(27);
 //
 // C++11, through its support for uniform initialization, adds these:
 //
-   int x13 = { 27 };
-   int x14{ 27 };
+int x13 = { 27 };
+int x14{ 27 };
 //
 // So, four different syntaxes are available to build the result of assigning
 // an int with the value 27
@@ -132,10 +132,10 @@ auto& func2 = someFunc;  // func2's type is void (&)(int, double)
 // With introduction of the keyword auto we would like to replace all of the 
 // four syntaxes with the auto equivalents as:
 //
-   auto x21 = 27;
-   auto x22(27);
-   auto x23 = { 27 }; // type is std::initializer_list<int>, value: { 27 }
-   auto x24{ 27 }; // type is std::initializer_list<int>, value: { 27 }
+auto x21 = 27;
+auto x22(27);
+auto x23 = { 27 }; // type is std::initializer_list<int>, value: { 27 }
+auto x24{ 27 }; // type is std::initializer_list<int>, value: { 27 }
 //
 // These declarations all compile, but they don't have the same meaning as the
 // ones they replace. The first two statements do, indeed, declare a variable 
@@ -165,22 +165,22 @@ auto& func2 = someFunc;  // func2's type is void (&)(int, double)
 //  std::initializer_list. But if the corresponding template is passed the same
 //  initializer list, type deduction fails, and the code is rejected:
 //
-      auto xx = { 11, 23, 9 }; // xx's type is std::initializer_list<int>
+auto xx = { 11, 23, 9 }; // xx's type is std::initializer_list<int>
       
-      template<typename T>     // template with parameter declaration equivalent to 
-      void templ_func(T param) {        // x's declaration
-        // do something
-      };
+template<typename T>     // template with parameter declaration equivalent to 
+void templ_func(T param) {        // x's declaration
+  // do something
+};
 
-   // templ_func({ 11 23, 9 });         // error! can't deduce type for T
+// templ_func({ 11 23, 9 });         // error! can't deduce type for T
 
 //  However, if you specify in the template that param is std::initializer_list<T>
 //  for some unknown T, template type deduction will deduce what T is:
 
-     template<typename T>
-     void templ_func_with_init_list(std::initializer_list<T> initList) {
-       // do something
-     };
+template<typename T>
+void templ_func_with_init_list(std::initializer_list<T> initList) {
+  // do something
+};
 
 // so the only real difference between auto and template type deduction is that auto assumes
 // that a braced initializer represents a std::initializer_list, but template deduction

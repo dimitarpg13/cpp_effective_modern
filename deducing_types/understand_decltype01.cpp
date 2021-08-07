@@ -63,17 +63,17 @@
 // we'd like to write, showing the use of decltype to compute the return type.
 // The template needs a bit of refinement but we will defer that for now:
 //
-   void authenticateUser() {
-       // do some authentication
-   };
+void authenticateUser() {
+ // do some authentication
+};
 //
-   template<typename Container, typename Index>      // works but
-   auto authAndAccess1(Container& c, Index i)         // it requires 
-     -> decltype(c[i])                               // refinement
-   {
-      authenticateUser();
-      return c[i];
-   };   
+template<typename Container, typename Index>      // works but
+auto authAndAccess1(Container& c, Index i)        // it requires 
+  -> decltype(c[i])                               // refinement
+{
+   authenticateUser();
+   return c[i];
+};   
 //
 // The use of auto before the function name has nothing to do with type 
 // deduction. Rather, it indicates that C++11's trailing return type 
@@ -97,12 +97,12 @@
 // type deduction will take place. In particular, it means that compilers
 // will deduce the function's return type from function's implementation:
 //
-   template<typename Container, typename Index>       // C++14
-   auto authAndAccess2(Container& c, Index i)         // not quite correct
-   {
-      authenticateUser();
-      return c[i];            // return type deduced from c[i]
-   }
+template<typename Container, typename Index>       // C++14
+auto authAndAccess2(Container& c, Index i)         // not quite correct
+{
+  authenticateUser();
+  return c[i];            // return type deduced from c[i]
+}
 //
 // For functions with an auto return type specification, compilers employ
 // template type deduction. In this case that's problematic. As we've 
@@ -129,13 +129,13 @@
 // that the type is to be deduced, and decltype says that decltype rules should be
 // used during deduction. We can thus write authAndAccess like this:
 //
-   template<typename Container, typename Index>       // C++14; works,
-   decltype(auto)                                     // but still
-   authAndAccess3(Container& c, Index i)              // requires
-   {                                                  // refinement
-      authenticateUser();
-      return c[i];
-   }; 
+template<typename Container, typename Index>       // C++14; works,
+decltype(auto)                                     // but still
+authAndAccess3(Container& c, Index i)              // requires
+{                                                  // refinement
+   authenticateUser();
+   return c[i];
+}; 
 //
 // Now authAndAccess will truly return whatever c[i] returns. In particular, for the
 // common case where c[i] returns a T&, authAndAccess will also return a T&, and in
@@ -146,18 +146,18 @@
 // convenient for declaring variables when you want to apply the decltype type 
 // deduction rules to the initializing expression:
 //
-   struct Widget {
-     int i;
-   };
+struct Widget {
+  int i;
+};
      
-   Widget w;
+Widget w;
 
-   const Widget& cw = w;
+const Widget& cw = w;
 
-   auto myWidget1 = cw;    // auto type deduction: myWidget1's type is Widgest
+auto myWidget1 = cw;    // auto type deduction: myWidget1's type is Widgest
 
-   decltype(auto) myWidget2 = cw;   // decltype type deduction:
-                                      // myWidget2's type is const Widget&
+decltype(auto) myWidget2 = cw;   // decltype type deduction:
+                                 // myWidget2's type is const Widget&
 
 // Let us look again at authAndAccess3 - the container is passed by 
 // lvalue-reference-to-non-const, because returning a reference to an element
@@ -175,21 +175,21 @@
 // authAndAccess. A client might simply want to make a copy of an element
 // in the temporary container:
 
-   std::deque<std::string> makeStringDeque() {
-       std::deque<std::string> res;
-       std::stringstream stream;
-       for (int i=1; i<10; ++i) {
-           stream << i;
-           std::string str;
-           stream >> str; 
-           res.push_back(str);
-       }
-       // init res with something
-       return res;
-   }; 
+std::deque<std::string> makeStringDeque() {
+   std::deque<std::string> res;
+   std::stringstream stream;
+   for (int i=1; i<10; ++i) {
+       stream << i;
+       std::string str;
+       stream >> str; 
+       res.push_back(str);
+   }
+   // init res with something
+   return res;
+}; 
 
 // make copy of the 5th element of deque returned from makeStringDeque
-   auto s = authAndAccess3(makeStringDeque(), 5);
+auto s = authAndAccess3(makeStringDeque(), 5);
 
 // Supporting such use means we need to revise the declaration for authAndAccess to
 // accept both lvalues and rvalues. Overloading would work (one overload would 
@@ -198,12 +198,12 @@
 // authAndAccess employ a reference parameter that can bind to lvalues and rvalues
 // i.e. using unversal reference. authAndAccess can be declared like this:
 //
-  template<typename Container, typename Index>
-  decltype(auto) authAndAccess4(Container&& c, Index i)  // c is now universal ref
-  { 
-     authenticateUser();
-     return c[i];
-  };
+template<typename Container, typename Index>
+decltype(auto) authAndAccess4(Container&& c, Index i)  // c is now universal ref
+{ 
+   authenticateUser();
+   return c[i];
+};
 
 // In this template we do not know what type of container we are operating on, and
 // that means we're equally ignorant of the type of index objects it uses. Employing
@@ -214,27 +214,27 @@
 // However, we need to update the template's implementation to bring it into accord
 // the design pattern of forwarding universal references:
 //
-  template<typename Container, typename Index>  // final C++14 version
-  decltype(auto)
-  authAndAccess5(Container&& c, Index i)
-  {
-     authenticateUser();
-     return std::forward<Container>(c)[i];
-  }
+template<typename Container, typename Index>  // final C++14 version
+decltype(auto)
+authAndAccess5(Container&& c, Index i)
+{
+  authenticateUser();
+  return std::forward<Container>(c)[i];
+}
 
 // This should do everything we want but it requires C++14 compiler. If one is not
 // available for your project you will need to use C++11 version of the template.
 // It is the same as the C++14 counterpart except that you have to specify the 
 // return type yourself.
 
-  template<typename Container, typename Index>
-  auto
-  authAndAccess(Container&& c, Index i)
-  -> decltype(std::forward<Container>(c)[i])
-  {
-     authenticateUser();
-     return std::forward<Container>(c)[i];
-  }
+template<typename Container, typename Index>
+auto
+authAndAccess(Container&& c, Index i)
+-> decltype(std::forward<Container>(c)[i])
+{
+   authenticateUser();
+   return std::forward<Container>(c)[i];
+}
 
 // Notice previous remark that decltype almost always produces the type we expect.
 // To fully understand decltype's behavior, you'll have to familiarize yourself
@@ -262,19 +262,19 @@
 // support for decltype(auto), it means that a seemingly trivial change in the way
 // you write a return statement can affect the deduced type for a function:
 //
-  decltype(auto) f1()
-  {
-     int x = 0;
+decltype(auto) f1()
+{
+   int x = 0;
 
-     return x;  // decltype(x) is int, so f1 returns int
-  };
+   return x;  // decltype(x) is int, so f1 returns int
+};
 
-  decltype(auto) f2()
-  {
-     int x = 0;
+decltype(auto) f2()
+{
+   int x = 0;
 
-     return (x); // decltype((x)) is int& so f2 returns int&
-  };
+   return (x); // decltype((x)) is int& so f2 returns int&
+};
 
 // Note that not only does f2 have a different return type from f1, it's also 
 // returning a reference to a local variable! This will lead to undefined 
