@@ -8,6 +8,7 @@
 #include <array>
 #include <initializer_list>
 #include <deque>
+#include <memory>
 
 // Intro:
 // auto is simple but at the same time it is more subtle than it looks.
@@ -43,6 +44,21 @@ void dwim2(It b, It e)
     auto currValue = *b;
   }
 };
+
+// and because auto uses type deduction it can represent types known only
+// to compilers
+
+struct Widget {
+  int i;
+  bool operator<(const Widget& other) {
+    return i < other.i;
+  }
+};
+
+auto derefUPLess =                        // comparison func
+  [](const std::unique_ptr<Widget>& p1,   // for Widgets
+     const std::unique_ptr<Widget>& p2)  // pointed to by std::unique_ptr's
+  { return *p1 < *p2; };
 
 int main(const int argc, const char* argv[]) 
 {
