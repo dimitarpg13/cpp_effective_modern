@@ -10,6 +10,8 @@
 #include <deque>
 #include <memory>
 #include <functional>
+#include <vector>
+#include <unordered_map>
 
 // Intro:
 // auto is simple but at the same time it is more subtle than it looks.
@@ -87,6 +89,89 @@ auto derefLess =                          // C++14 comparison
 //
 std::function<bool(const std::unique_ptr<Widget>&,
                    const std::unique_ptr<Widget>&)> func;
+
+// Because lambda expressions yield callable objects, closures can be stored in 
+// std::function objects. This means we could declare C++11 version of derefUPLess
+// without using auto as follows:
+
+std::function<bool(const std::unique_ptr<Widget>&,
+                   const std::unique_ptr<Widget>&)>
+  derefUPLess2 = [](const std::unique_ptr<Widget>& p1,
+                    const std::unique_ptr<Widget>& p2)
+                   { return *p1 < *p2; };
+
+// it is important to recognize that even setting aside the syntactic verbosity and 
+// need to repeat the parameter types, using std::function is not the same as 
+// using auto. An auto-declared variable holding a closure has the same type as the
+// closure and as such it uses only as much memory as the closure requires. The type
+// of std::function-declared variable holding a closure is an instantiation of the
+// std::function template and that has a fixed size for any given signature. 
+// This size may not be adequate for the closure it's asked to store and when that is
+// the case the std::function constructor will allocate heap memory to store the 
+// closure. The result is that the std::function object typically uses more memory 
+// than the auto-declared object. Due to the implementation details that restrict 
+// inlining and yield indirect function calls, invoking a closure via a std::function
+// object is almost certain to be slower than calling it via an auto-declared object.
+// In other words, the std:function approach is generally bigger and slower than the
+// auto approach, and it may yield out-of-memory exceptions too. So if one have to 
+// choose between std::function and auto for holding a closure it is quite obvious
+// that auto is the better choice. A similar argument can be made for auto over
+// std::function for holding the result of calls to std::bind.
+//
+// The advantages of auto extend beyond the avoidance of uninitialized variables, 
+// verbose variable declarations, and the ability to directly hold closures. One is
+// the ability to avoid problems related to "type shortcuts". Here is an example:
+//
+std::vector<int> v;
+// ...
+unsigned sz = v.size();
+//
+// The official return type of v.size() is std::vector<int>::size_type which is 
+// specified to be an unsigned integral type. On 32-bit Windows for example, both
+// unsigned and std::vector<int>::size_type are the same size but on 64-bit 
+// unsigned is 32 bits while std::vector<int>::size_type is 64 bits. This means
+// portability issues when porting to 64-bits a code which works correctly 
+// under 32-bits.  
+
+// Using auto solves this issue:
+//
+auto sz_new = v.size();
+
+// Another example where using auto is expedient
+//
+std::unordered_map<std::string, int> m;
+
+//for (const std::pair<std::string, int>& p : m)
+//{
+//   // do something with p
+//}
+
+// The problem here is that the key part of std::unordered_map is const, so the
+// type of pair in the hash table isn't std::pair<std::string, int>, it is 
+// std::pair<const std::string, int>. The compilers will strive to find a way
+// to convert std::pair<const std::string, int> objects to std::pair<std::string, int>.
+// They may succeed by creating a temporary object of the type that p wants to bind to
+// by copying each object in m, then binding the reference p to that temp object.
+// At the end of each loop iteration, the temp object would be destroyed. Or the compiles
+// can throw internal error like the microsoft visual studio 2019 compiler: 
+//
+//
+// prefer_auto_to_explicit_type01.cpp(144,46): fatal error C1001: Internal compiler error.
+//  [prefer_auto_to_explicit_type01.vcxproj]
+//   (compiler file 'msc1.cpp', line 1532)
+// (compiler file 'msc1.cpp', line 1532)
+// To work around this problem, try simplifying or changing the program near the locations listed above.
+// If possible please provide a repro here: https://developercommunity.visualstudio.com
+// Please choose the Technical Support command on the Visual C++
+// Help menu, or open the Technical Support help file for more information
+// INTERNAL COMPILER ERROR in 
+// 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.25.28610\
+//               bin\HostX64\x64\CL.exe'
+//
+//
+// Such unintentional mismatches can be auto-ed away:
+//
+//
 
 
 int main(const int argc, const char* argv[]) 
