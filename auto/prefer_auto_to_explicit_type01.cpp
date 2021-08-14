@@ -139,7 +139,7 @@ auto sz_new = v.size();
 
 // Another example where using auto is expedient
 //
-std::unordered_map<std::string, int> m;
+//std::unordered_map<std::string, int> m;
 
 //for (const std::pair<std::string, int>& p : m)
 //{
@@ -152,31 +152,36 @@ std::unordered_map<std::string, int> m;
 // to convert std::pair<const std::string, int> objects to std::pair<std::string, int>.
 // They may succeed by creating a temporary object of the type that p wants to bind to
 // by copying each object in m, then binding the reference p to that temp object.
-// At the end of each loop iteration, the temp object would be destroyed. Or the compiles
-// can throw internal error like the microsoft visual studio 2019 compiler: 
-//
-//
-// prefer_auto_to_explicit_type01.cpp(144,46): fatal error C1001: Internal compiler error.
-//  [prefer_auto_to_explicit_type01.vcxproj]
-//   (compiler file 'msc1.cpp', line 1532)
-// (compiler file 'msc1.cpp', line 1532)
-// To work around this problem, try simplifying or changing the program near the locations listed above.
-// If possible please provide a repro here: https://developercommunity.visualstudio.com
-// Please choose the Technical Support command on the Visual C++
-// Help menu, or open the Technical Support help file for more information
-// INTERNAL COMPILER ERROR in 
-// 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.25.28610\
-//               bin\HostX64\x64\CL.exe'
-//
+// At the end of each loop iteration, the temp object would be destroyed. 
 //
 // Such unintentional mismatches can be auto-ed away:
 //
-//
+//for (const auto& p : m)
+//{
+   // do something with p
+//}
 
 
 int main(const int argc, const char* argv[]) 
 {
+   // Another example where using auto is expedient
+   //
+   std::unordered_map<std::string, int> m = { {"Dimitar", 1}, {"Mieko", 2} };
 
+   // creates a temporary object of the type that p wants to bind to
+   // by copying each object in m, then binding the reference p to that temp object.
+   // At the end of each loop iteration, the temp object would be destroyed.
+   for (const std::pair<std::string, int>& p : m)
+   {
+      // do something with p
+   };
+
+   // Such unintentional mismatches can be auto-ed away:
+   //
+   //for (const auto& p : m)
+   //{
+   //  // do something with p
+   //}
 
    return 0;
 }
