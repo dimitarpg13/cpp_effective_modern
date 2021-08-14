@@ -8,3 +8,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(prefer_auto_to_explicit_type01 prefer_auto_to_explicit_type01.cpp)
+add_executable(use_explicitly_typed_initializer01 use_explicitly_typed_initializer01.cpp)

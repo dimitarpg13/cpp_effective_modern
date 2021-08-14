@@ -173,15 +173,17 @@ int main(const int argc, const char* argv[])
    // At the end of each loop iteration, the temp object would be destroyed.
    for (const std::pair<std::string, int>& p : m)
    {
-      // do something with p
+       // do something with p
+       std::cout << "p.first=" << p.first << ", p.second=" << p.second << std::endl;
    };
 
    // Such unintentional mismatches can be auto-ed away:
    //
-   //for (const auto& p : m)
-   //{
-   //  // do something with p
-   //}
+   for (const auto& p : m)
+   {
+       // do something with p
+       std::cout << "p.first=" << p.first << ", p.second=" << p.second << std::endl;
+   };
 
    return 0;
 }
