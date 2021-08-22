@@ -151,7 +151,105 @@ auto highPriority2 = features(w)[5];
 // at least conceptually. And once you've found them, do you really have to 
 // abandon auto and the many advantages of it?
 //
-// Let's answer the how-do-you-find-them question first. 
+// Let's answer the how-do-you-find-them question first. Although "invisible"
+// proxy classes are designed to fly beneath programmer radar in day-to-day use
+// libraries using them often do so. 
+//
+// Where documentation comes up short header files fill the gap. It is rarely 
+// possible for source code to fully cloak proxy objects. They are typically
+// returned from functions that clients are expected to call, so function
+// signatures usually reflect their existence. Here's the spec for 
+// std::vector<bool>::operator[] for example:
+//
+//   namespace std {  // from C++ standards
+//      template <class Allocator>
+//      class vector<bool, Allocator> {
+//      public:
+//        ...
+//        class reference { ... };
+//
+//        reference operator[](size_type n);
+//
+//        ...
+//
+//      };
+//
+//   }  
+//
+// Assuming you know that operator[] for std::vector<T> normally returns a T&, the
+// unconventional return type for operator[] in this case is a tip-off that a 
+// proxy class is in use. Once auto has been determined to be deducing the type
+// of a proxy class instead of the type being proxied, the solution need not 
+// involve abandoning auto. The problem is that auto isn't deducing the type you
+// want it to deduce. The solution is to force a different type deduction. For 
+// the purpose we use _the explicitly typed initializer idiom_.
+//
+// The explicitly typed initializer idiom involves declaring a variable with auto,
+// but casting the initialization expression to the type you want auto to deduce.
+// Here's how it can be used to force highPriority to be a bool, for example:
+//
+//   auto highPriority = static_cast<bool>(features(w)[5]);
+//
+// Here, features(w)[5] continues to return a std::vector<bool>::reference object, 
+// just as it always has, but the cast changes the type of the expression to bool,
+// which auto then deduces as the type for highPriority. At runtime, the
+//  std::vector<bool>::reference object return from std::vector<bool>::operator[]
+//  executes the conversion to bool that it supports, and as part of that conversion
+//  the still-valid pointer to the std::vector<bool> returned from features is 
+//  dereferenced. That avoids the undefined behavior we ran into earlier. The index 5
+//  is then applied to the bits pointed to by the pointer, and the bool value that
+//  emerges is used to initialize highPriority. 
+//
+//  For the Matrix example. the explicitly typed initializer idion would look like 
+//  this:
+//
+//    auto sum = static_cast<Matrix>(m1 + m2 + m3 + m4);
+//
+//  Applications of the idiom aren't limited to initializers yielding proxy class
+//  types. It can also be useful to emphasize that you are deliberately creating a 
+//  variable of a type that is different from the initializing expression. For
+//  example suppose you have a function to calculate some tolerance value:
+//
+//    double calcEpsilon();    // return tolerance value
+//
+//  calcEpsilon clearly returns a double , but suppose you know that for your 
+//  application, the precision of a float is adequate, and you care about the 
+//  difference in size between floats and doubles. You could declare a float 
+//  variable to store the result of calcEpsilon,
+//
+//   float ep = calcEpsilon();  // implicitly convert double -> float
+//
+//  A declaration using the explicitly typed initializer idiom, however,
+//  is clear:
+//
+//   auto ep = static_cast<float>(calcEpsilon());
+//
+//  Similar reasoning applies if you have a floating-point expression that you
+//  are delibierately storing as an integer value. Suppose you need to calculate 
+//  the index of an element in a container with random access iterators (i.e.
+//   std::vector, std::deque, or std::array) and you are given a double between
+//   0.0 and 1.0 indicating how far from the beginning of the container the 
+//   desired element is located. (0.5 would indicate the middle of the container).
+//   Further suppose that you are confident that the resulting index will fit in
+//   an int. If the container is c and the double is d, you could calculate the 
+//   index this way,
+//
+//    int index = d * c.size();
+//
+//  but this obscures the fact that you're intentionally converting the double on
+//  the right to int. The explicitly typed initializer idiom makes things 
+//  transparent:
+//
+//    auto index = static_cast<int>(d * c.size())
+//
+//  Things to remember:
+//
+//  * "Invisible" proxy types can cause auto to deduce the "wrong" type for an
+//  initializing expression
+//
+//  * The explicitly typed initializer idiom forces auto to deduce the type 
+//  you want it to have
+//
 
 
 int main(const int argc, const char* argv[]) 
